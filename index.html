@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Authenticator Global — Track & Trace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #F6F6F6;
+      --bg-card:    #FFFFFF;
+      --surface:    #E8E8E8;
+      --border:     rgba(58,58,58,0.10);
+      --border-med: rgba(58,58,58,0.18);
+      --text-dark:  #3A3A3A;
+      --text-mid:   #6b6b6b;
+      --text-light: #9a9a9a;
+      --crimson:    #930E16;
+      --crimson-d:  #A60F19;
+      --crimson-bg: rgba(147,14,22,0.06);
+      --crimson-bd: rgba(147,14,22,0.2);
+      --white:      #FFFFFF;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-dark);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233A3A3A' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .deco-circle {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .deco-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(147,14,22,0.04), transparent 65%);
+      top: -200px; right: -150px;
+    }
+    .deco-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(58,58,58,0.04), transparent 65%);
+      bottom: -150px; left: -100px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 20px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 16px rgba(58,58,58,0.05);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+    .logo-mark {
+      width: 40px; height: 40px;
+      background: var(--crimson);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(147,14,22,0.25);
+    }
+    .logo-mark svg { width: 20px; height: 20px; color: #fff; }
+    .logo-wordmark { display: flex; flex-direction: column; line-height: 1.1; }
+    .logo-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      font-size: 17px;
+      letter-spacing: 0.5px;
+      color: var(--text-dark);
+    }
+    .logo-sub {
+      font-size: 9.5px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--crimson);
+      font-weight: 500;
+    }
+
+    nav a {
+      font-size: 12.5px;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-mid);
+      text-decoration: none;
+      padding: 8px 18px;
+      border: 1px solid var(--border-med);
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    nav a:hover {
+      border-color: var(--crimson);
+      color: var(--crimson);
+      background: var(--crimson-bg);
+    }
+
+    /* ── HERO ── */
+    main {
+      position: relative;
+      z-index: 5;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px 60px;
+      text-align: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--crimson-bg);
+      border: 1px solid var(--crimson-bd);
+      border-radius: 4px;
+      padding: 6px 18px;
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 2.5px;
+      color: var(--crimson);
+      text-transform: uppercase;
+      margin-bottom: 36px;
+      animation: fadeDown 0.7s ease both;
+    }
+    .eyebrow-rule {
+      width: 24px; height: 1px;
+      background: var(--crimson);
+      opacity: 0.5;
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(48px, 8vw, 96px);
+      font-weight: 500;
+      line-height: 0.92;
+      letter-spacing: -1px;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+      animation: fadeDown 0.7s 0.08s ease both;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--crimson);
+    }
+    .h1-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(20px, 3.5vw, 36px);
+      font-weight: 400;
+      font-style: italic;
+      color: var(--text-mid);
+      margin-bottom: 36px;
+      animation: fadeDown 0.7s 0.14s ease both;
+    }
+
+    .divider {
+      width: 48px; height: 2px;
+      background: var(--crimson);
+      margin: 0 auto 36px;
+      animation: scaleX 0.6s 0.2s ease both;
+      transform-origin: center;
+    }
+    @keyframes scaleX {
+      from { transform: scaleX(0); opacity: 0; }
+      to   { transform: scaleX(1); opacity: 1; }
+    }
+
+    .subtitle {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--text-mid);
+      max-width: 440px;
+      margin: 0 auto 52px;
+      animation: fadeDown 0.7s 0.22s ease both;
+    }
+    .subtitle strong { color: var(--text-dark); font-weight: 500; }
+
+    /* ── SEARCH CARD ── */
+    .search-card {
+      width: 100%;
+      max-width: 620px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px;
+      box-shadow: 0 8px 40px rgba(58,58,58,0.08), 0 2px 8px rgba(58,58,58,0.04);
+      animation: fadeUp 0.7s 0.28s ease both;
+      position: relative;
+    }
+    .search-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 36px; right: 36px;
+      height: 2px;
+      background: var(--crimson);
+      border-radius: 0 0 4px 4px;
+    }
+
+    .search-label {
+      font-size: 10.5px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 2px;
+      color: var(--text-light);
+      text-transform: uppercase;
+      text-align: left;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .search-label::before {
+      content: '';
+      display: inline-block;
+      width: 12px; height: 1px;
+      background: var(--crimson);
+    }
+
+    .input-wrap {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .code-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1.5px solid var(--border-med);
+      border-radius: 8px;
+      padding: 15px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--text-dark);
+      outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s, background 0.2s;
+      letter-spacing: 1.5px;
+    }
+    .code-input::placeholder {
+      color: var(--text-light);
+      letter-spacing: 0.5px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+    }
+    .code-input:focus {
+      border-color: var(--crimson);
+      box-shadow: 0 0 0 3px rgba(147,14,22,0.07);
+      background: var(--white);
+    }
+
+    .search-btn {
+      background: var(--crimson);
+      border: none;
+      border-radius: 8px;
+      padding: 15px 28px;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13.5px;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .search-btn:hover {
+      background: var(--crimson-d);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(147,14,22,0.28);
+    }
+    .search-btn:active { transform: translateY(0); box-shadow: none; }
+    .search-btn:disabled { opacity: 0.75; cursor: not-allowed; transform: none; }
+    .search-btn svg { width: 15px; height: 15px; }
+
+    /* ── RESULT ── */
+    .result-box {
+      margin-top: 18px;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 13px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      animation: fadeUp 0.3s ease both;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .result-box.show { display: flex; }
+    .result-box.not-found {
+      background: rgba(147,14,22,0.05);
+      border: 1px solid rgba(147,14,22,0.18);
+      color: var(--crimson-d);
+    }
+    .result-box svg { flex-shrink: 0; width: 16px; height: 16px; }
+
+    .scan-hint {
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 11.5px;
+      color: var(--text-light);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .scan-hint svg { width: 13px; height: 13px; }
+
+    /* ── TRUST STRIP ── */
+    .trust-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 52px;
+      animation: fadeUp 0.7s 0.42s ease both;
+      flex-wrap: wrap;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--white);
+      overflow: hidden;
+      max-width: 620px;
+      width: 100%;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-mid);
+      padding: 16px 28px;
+      flex: 1;
+      min-width: 160px;
+      justify-content: center;
+    }
+    .trust-item + .trust-item { border-left: 1px solid var(--border); }
+    .trust-item svg { color: var(--crimson); width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 5;
+      text-align: center;
+      padding: 22px 24px 28px;
+      border-top: 1px solid var(--border);
+      background: var(--white);
+    }
+    .footer-text {
+      font-size: 11.5px;
+      color: var(--text-light);
+      letter-spacing: 0.3px;
+    }
+    .footer-text a {
+      color: var(--crimson);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .footer-text a:hover { text-decoration: underline; }
+
+    /* ── SCAN BUTTON ── */
+    .scan-btn {
+      background: var(--white);
+      border: 1.5px solid var(--border-med);
+      border-radius: 8px;
+      padding: 15px 16px;
+      color: var(--text-mid);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .scan-btn svg { width: 18px; height: 18px; }
+    .scan-btn:hover { border-color: var(--crimson); color: var(--crimson); background: var(--crimson-bg); }
+
+    /* ── SCANNER MODAL ── */
+    .scanner-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(20,10,10,0.75);
+      z-index: 1000;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(6px);
+      padding: 20px;
+    }
+    .scanner-overlay.open { display: flex; }
+
+    .scanner-modal {
+      background: var(--white);
+      border-radius: 16px;
+      width: 100%; max-width: 400px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+      animation: fadeUp 0.3s ease both;
+    }
+
+    .scanner-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .scanner-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 500; font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px; color: var(--text-dark);
+    }
+    .scanner-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-light); font-size: 18px; line-height: 1;
+      padding: 4px 8px; border-radius: 4px; transition: all 0.2s;
+    }
+    .scanner-close:hover { color: var(--crimson); background: var(--crimson-bg); }
+
+    .scanner-viewport {
+      position: relative;
+      background: #000;
+      aspect-ratio: 1;
+      overflow: hidden;
+    }
+    #scannerVideo {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+    }
+
+    /* Targeting frame corners */
+    .scanner-frame {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .corner {
+      position: absolute;
+      width: 28px; height: 28px;
+      border-color: var(--crimson);
+      border-style: solid;
+    }
+    .corner.tl { top: 20%; left: 15%; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+    .corner.tr { top: 20%; right: 15%; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+    .corner.bl { bottom: 20%; left: 15%; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+    .corner.br { bottom: 20%; right: 15%; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+    /* Animated scan line */
+    .scan-line {
+      position: absolute;
+      left: 15%; right: 15%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--crimson), transparent);
+      animation: scanMove 2s ease-in-out infinite;
+      box-shadow: 0 0 8px rgba(147,14,22,0.6);
+    }
+    @keyframes scanMove {
+      0%   { top: 20%; }
+      50%  { top: 78%; }
+      100% { top: 20%; }
+    }
+
+    .scanner-hint {
+      position: absolute; bottom: 16px; left: 0; right: 0;
+      text-align: center; font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      font-family: 'JetBrains Mono', monospace; letter-spacing: 0.3px;
+    }
+
+    .scanner-result {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 20px;
+      background: rgba(26,122,60,0.07);
+      border-top: 1px solid rgba(26,122,60,0.2);
+      font-size: 13px; font-family: 'JetBrains Mono', monospace;
+      color: #1a7a3c; letter-spacing: 0.5px;
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 640px) {
+      header { padding: 14px 16px; gap: 8px; }
+
+      /* Logo compact on mobile */
+      .logo { gap: 9px; }
+      .logo-mark { width: 34px; height: 34px; }
+      .logo-mark svg { width: 17px; height: 17px; }
+      .logo-name { font-size: 14px; }
+      .logo-sub { font-size: 8px; letter-spacing: 1.8px; }
+
+      /* Nav button smaller, no text overflow */
+      nav a {
+        font-size: 10.5px;
+        padding: 7px 11px;
+        letter-spacing: 0.4px;
+        white-space: nowrap;
+      }
+
+      main { padding: 48px 16px 40px; }
+      .search-card { padding: 24px 18px; }
+      .input-wrap { flex-direction: column; }
+      .scan-btn { padding: 14px; }
+      .search-btn { justify-content: center; padding: 15px; }
+      .trust-item + .trust-item { border-left: none; border-top: 1px solid var(--border); }
+    }
+
+    /* Very small screens - hide arrow text, keep icon feel */
+    @media (max-width: 380px) {
+      .logo-sub { display: none; }
+      nav a { font-size: 10px; padding: 7px 10px; }
+    }
+
+    /* ── QR SCANNER ── */
+    .scan-btn {
+      background: none;
+      border: 1.5px solid var(--border-med);
+      border-radius: 8px;
+      padding: 15px 16px;
+      cursor: pointer;
+      color: var(--text-mid);
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .scan-btn:hover { border-color: var(--crimson); color: var(--crimson); background: var(--crimson-bg); }
+    .scan-btn svg { width: 18px; height: 18px; }
+
+    .scanner-modal {
+      display: none;
+      position: fixed; inset: 0;
+      z-index: 9999;
+      background: #000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .scanner-modal.open { display: flex; }
+
+    .scanner-topbar {
+      width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      background: rgba(0,0,0,0.6);
+      position: relative; z-index: 2;
+    }
+    .scanner-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; color: rgba(255,255,255,0.7);
+    }
+    .scanner-close {
+      background: rgba(255,255,255,0.15);
+      border: none; border-radius: 50%;
+      width: 34px; height: 34px;
+      color: #fff; font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    #qr-video-container {
+      flex: 1;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    #qr-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Overlay frame */
+    .scan-frame {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 220px; height: 220px;
+      z-index: 3; pointer-events: none;
+    }
+    .scan-frame::before, .scan-frame::after,
+    .sf-br, .sf-bl {
+      content: '';
+      position: absolute;
+      width: 32px; height: 32px;
+      border-color: var(--crimson);
+      border-style: solid;
+    }
+    .scan-frame::before { top:0; left:0; border-width:3px 0 0 3px; border-radius:4px 0 0 0; }
+    .scan-frame::after  { top:0; right:0; border-width:3px 3px 0 0; border-radius:0 4px 0 0; }
+    .sf-br { bottom:0; right:0; border-width:0 3px 3px 0; border-radius:0 0 4px 0; }
+    .sf-bl { bottom:0; left:0; border-width:0 0 3px 3px; border-radius:0 0 0 4px; }
+    .scan-line {
+      position: absolute;
+      left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--crimson), transparent);
+      animation: scanMove 2s ease-in-out infinite;
+    }
+    @keyframes scanMove {
+      0%   { top: 10%; }
+      50%  { top: 90%; }
+      100% { top: 10%; }
+    }
+
+    .scanner-hint {
+      width: 100%;
+      text-align: center;
+      padding: 14px;
+      background: rgba(0,0,0,0.6);
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .scanner-error {
+      display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; padding: 32px 24px; text-align: center;
+      flex: 1; width: 100%;
+    }
+    .scanner-error.show { display: flex; }
+    .scanner-error svg { color: var(--crimson); }
+    .scanner-error-title { font-family:'JetBrains Mono',monospace; font-size:14px; color:#fff; font-weight:500; }
+    .scanner-error-detail { font-size:13px; color:rgba(255,255,255,0.5); line-height:1.6; max-width:280px; }
+    .scanner-retry-btn {
+      background: var(--crimson); color: #fff; border: none;
+      border-radius: 8px; padding: 11px 24px;
+      font-family: 'DM Sans',sans-serif; font-size:13px; font-weight:500;
+      cursor: pointer; margin-top: 8px;
+    }
+
+
+    /* ── html5-qrcode overrides ── */
+    #qr-reader {
+      border: none !important;
+      padding: 0 !important;
+      width: 100% !important;
+    }
+    #qr-reader video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      border-radius: 0 !important;
+    }
+    #qr-reader__scan_region {
+      background: transparent !important;
+      border: none !important;
+    }
+    #qr-reader__scan_region img { display: none !important; }
+    #qr-reader__dashboard { display: none !important; }
+    #qr-reader__status_span { display: none !important; }
+    @media (max-width: 640px) {
+      .scan-btn { padding: 15px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="deco-circle deco-1"></div>
+  <div class="deco-circle deco-2"></div>
+
+  <header>
+    <a href="/" class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="logo-wordmark">
+        <span class="logo-name">Authenticator Global</span>
+        <span class="logo-sub">By Reliable Global</span>
+      </div>
+    </a>
+    <nav>
+      <a href="/partners">Partner Login →</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="eyebrow">
+      <span class="eyebrow-rule"></span>
+      Product Verification System
+      <span class="eyebrow-rule"></span>
+    </div>
+
+    <h1>Product Authenticity &amp; <em>Traceability</em></h1>
+    <div class="h1-sub">Global traceability for genuine products.</div>
+    <div class="divider"></div>
+
+    <p class="subtitle">
+      Verify product authenticity instantly with
+      <strong>Authenticator Global</strong> — enter or scan your unique product code below.
+    </p>
+
+    <div class="search-card">
+      <span class="search-label">Product Code</span>
+      <div class="input-wrap">
+        <input
+          type="text"
+          class="code-input"
+          id="codeInput"
+          placeholder="Enter or scan your product code"
+          autocomplete="off"
+          spellcheck="false"
+          autocorrect="off"
+          autocapitalize="characters"
+        />
+        <button class="scan-btn" id="scanBtn" onclick="openScanner()" title="Scan QR / Barcode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <path d="M14 14h2v2h-2zM18 14h3M14 18h3M18 18h3v3"/>
+          </svg>
+        </button>
+        <button class="search-btn" id="searchBtn" onclick="handleSearch()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          Verify
+        </button>
+      </div>
+
+      <!-- Scanner Modal -->
+      <div class="scanner-overlay" id="scannerOverlay">
+        <div class="scanner-modal">
+          <div class="scanner-header">
+            <div class="scanner-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--crimson)">
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <path d="M14 14h2v2h-2zM18 14h3M14 18h3M18 18h3v3"/>
+              </svg>
+              Scan QR / Barcode
+            </div>
+            <button class="scanner-close" onclick="closeScanner()">✕</button>
+          </div>
+          <div class="scanner-viewport">
+            <video id="scannerVideo" playsinline></video>
+            <div class="scanner-frame">
+              <div class="corner tl"></div>
+              <div class="corner tr"></div>
+              <div class="corner bl"></div>
+              <div class="corner br"></div>
+              <div class="scan-line"></div>
+            </div>
+            <div class="scanner-hint" id="scannerHint">Point camera at QR or barcode</div>
+          </div>
+          <div class="scanner-result" id="scannerResult" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--green,#1a7a3c);flex-shrink:0">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span id="scannerResultText"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-box not-found" id="resultBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="resultText">No product found. Please verify the code and try again.</span>
+      </div>
+
+
+    </div>
+
+    <div class="trust-strip">
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Anti-Counterfeit
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        Real-Time Lookup
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Global Supply Chain
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p class="footer-text">
+      Trace your product with us &mdash; contact us at
+      <a href="mailto:info@reliableglobal.com">info@reliableglobal.com</a>
+    </p>
+  </footer>
+
+
+  <!-- QR SCANNER MODAL -->
+  <div class="scanner-modal" id="scannerModal">
+    <div class="scanner-topbar">
+      <span class="scanner-title">— Scan QR / Barcode —</span>
+      <button class="scanner-close" onclick="closeScanner()">✕</button>
+    </div>
+    <div id="html5qr-container" style="flex:1;width:100%;"></div>
+    <div class="scanner-hint" id="scannerHint">Point camera at QR code or barcode</div>
+  </div>
+
+  <script>
+    const input = document.getElementById('codeInput');
+    const resultBox = document.getElementById('resultBox');
+    const resultText = document.getElementById('resultText');
+    const btn = document.getElementById('searchBtn');
+
+    // Store last known location
+    let userLocation = null;
+
+    // Request GPS on page load silently
+    function initLocation() {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          userLocation = {
+            lat: pos.coords.latitude.toFixed(6),
+            lng: pos.coords.longitude.toFixed(6),
+            acc: Math.round(pos.coords.accuracy),
+          };
+        },
+        function() { userLocation = null; },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    }
+    initLocation();
+
+    function handleSearch() {
+      const code = input.value.trim();
+      if (!code) {
+        input.focus();
+        input.style.borderColor = 'var(--crimson)';
+        input.style.boxShadow = '0 0 0 3px rgba(147,14,22,0.12)';
+        setTimeout(() => { input.style.borderColor = ''; input.style.boxShadow = ''; }, 1400);
+        return;
+      }
+
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="animation:spin 0.8s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Checking...`;
+      btn.disabled = true;
+      resultBox.classList.remove('show');
+
+      // Get fresh location at time of search
+      function doSearch(loc) {
+        const locStr = loc
+          ? `${loc.lat}, ${loc.lng} (±${loc.acc}m)`
+          : 'Location unavailable';
+
+        // TODO: Replace setTimeout with actual API call
+        // fetch('/api/verify.php', { method:'POST', body: JSON.stringify({ code, lat: loc?.lat, lng: loc?.lng }) })
+        setTimeout(() => {
+          resultText.textContent = `No product found for "${code}". Please check the code and try again.`;
+          resultBox.className = 'result-box not-found show';
+          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> Verify`;
+          btn.disabled = false;
+          // Show location info below result
+          showLocationTag(loc);
+        }, 900);
+      }
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            userLocation = {
+              lat: pos.coords.latitude.toFixed(6),
+              lng: pos.coords.longitude.toFixed(6),
+              acc: Math.round(pos.coords.accuracy),
+            };
+            doSearch(userLocation);
+          },
+          function() { doSearch(userLocation); }, // use cached if fresh fails
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
+        );
+      } else {
+        doSearch(null);
+      }
+    }
+
+    function showLocationTag(loc) {
+      // Remove existing tag
+      const existing = document.getElementById('locationTag');
+      if (existing) existing.remove();
+      if (!loc) return;
+
+      const tag = document.createElement('div');
+      tag.id = 'locationTag';
+      tag.style.cssText = `
+        display:flex;align-items:center;gap:8px;margin-top:12px;
+        padding:10px 14px;border-radius:8px;
+        background:rgba(58,58,58,0.04);border:1px solid var(--border);
+        font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-light);
+      `;
+      tag.innerHTML = `
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--crimson)" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span>${loc.lat}, ${loc.lng}</span>
+        <span style="opacity:0.5;">±${loc.acc}m</span>
+        <a href="https://www.google.com/maps?q=${loc.lat},${loc.lng}"
+           target="_blank" rel="noopener"
+           style="margin-left:auto;color:var(--crimson);text-decoration:none;font-size:10px;
+                  padding:3px 8px;border:1px solid var(--crimson-bd);border-radius:4px;">
+          View Map ↗
+        </a>
+      `;
+      resultBox.parentNode.insertBefore(tag, resultBox.nextSibling);
+    }
+
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
+    input.addEventListener('input', () => {
+      resultBox.classList.remove('show');
+      const pos = input.selectionStart;
+      input.value = input.value.toUpperCase();
+      input.setSelectionRange(pos, pos);
+    });
+
+    // ── QR SCANNER (html5-qrcode) ────────────────────────────────────────
+    let html5QrScanner = null;
+
+    function openScanner() {
+      document.getElementById('scannerModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      startHtml5Scanner();
+    }
+
+    function closeScanner() {
+      document.getElementById('scannerModal').classList.remove('open');
+      document.body.style.overflow = '';
+      stopHtml5Scanner();
+    }
+
+    function stopHtml5Scanner() {
+      if (html5QrScanner) {
+        html5QrScanner.stop().then(function() {
+          html5QrScanner.clear();
+          html5QrScanner = null;
+        }).catch(function() {
+          html5QrScanner = null;
+        });
+      }
+    }
+
+    function startHtml5Scanner() {
+      var container = document.getElementById('html5qr-container');
+      container.innerHTML = '';
+
+      // html5-qrcode needs a div with an id
+      var scanDiv = document.createElement('div');
+      scanDiv.id = 'qr-reader';
+      scanDiv.style.cssText = 'width:100%;height:100%;';
+      container.appendChild(scanDiv);
+
+      html5QrScanner = new Html5Qrcode('qr-reader');
+
+      var config = {
+        fps: 10,
+        qrbox: { width: 220, height: 220 },
+        aspectRatio: 1.0,
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+      };
+
+      html5QrScanner.start(
+        { facingMode: 'environment' },
+        config,
+        function onSuccess(decodedText) {
+          // QR found — capture location at scan time
+          var code = decodedText.trim().toUpperCase();
+          var m = decodedText.match(/[?&]code=([^&]+)/i);
+          if (m) code = m[1].toUpperCase();
+          input.value = code;
+          closeScanner();
+          // Refresh location at moment of scan
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              function(pos) {
+                userLocation = {
+                  lat: pos.coords.latitude.toFixed(6),
+                  lng: pos.coords.longitude.toFixed(6),
+                  acc: Math.round(pos.coords.accuracy),
+                };
+                setTimeout(handleSearch, 400);
+              },
+              function() { setTimeout(handleSearch, 400); },
+              { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
+            );
+          } else {
+            setTimeout(handleSearch, 400);
+          }
+        },
+        function onError(err) {
+          // Scanning in progress — ignore frame errors
+        }
+      ).catch(function(err) {
+        console.error('Scanner start failed:', err);
+        // Fallback: try with any camera
+        html5QrScanner.start(
+          { facingMode: 'user' },
+          config,
+          function onSuccess(decodedText) {
+            var code = decodedText.trim().toUpperCase();
+            input.value = code;
+            closeScanner();
+            setTimeout(handleSearch, 400);
+          },
+          function onError() {}
+        ).catch(function(e2) {
+          container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;padding:32px;text-align:center;">'
+            + '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--crimson)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+            + '<div style="font-family:JetBrains Mono,monospace;font-size:13px;color:#fff;font-weight:500;">Camera unavailable</div>'
+            + '<div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6;">Go to browser Settings → Site Settings → Camera → Allow this site. Then tap Try Again.</div>'
+            + '<button onclick="stopHtml5Scanner();startHtml5Scanner();" style="background:var(--crimson);color:#fff;border:none;border-radius:8px;padding:11px 24px;font-size:13px;cursor:pointer;margin-top:8px;">Try Again</button>'
+            + '</div>';
+        });
+      });
+    }
+
+    document.getElementById('scannerModal').addEventListener('click', function(e) {
+      if (e.target === this) closeScanner();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeScanner();
+    });
+  </script>
+</body>
+</html>
