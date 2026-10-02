@@ -1,0 +1,1 @@
+<?php echo password_hash('client@lf01', PASSWORD_BCRYPT); ?>
